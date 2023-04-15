@@ -1,63 +1,51 @@
-const throttle = require('lodash.throttle');
+import throttle from 'lodash.throttle';
 
-let formData = {
-  email: '',
-  message: '',
-};
+const form = document.querySelector('.feedback-form');
+const email = document.querySelector('input');
+const textarea = document.querySelector('textarea');
 
-const STORAGE_KEY = 'feedback-form-state';
-const refs = {
-  form: document.querySelector('.feedback-form'),
-  email: document.querySelector('.feedback-form input'),
-  textarea: document.querySelector('.feedback-form textarea'),
-};
+form.addEventListener('submit', onFormSubmit);
+textarea.addEventListener('input', throttle(onMessageFilled, 500));
+email.addEventListener('input', throttle(onEmailFilled, 500));
 
-const formEmail = refs.form.elements.email;
-
-const formMessage = refs.form.elements.message;
-
-refs.form.addEventListener('submit', onFormSubmit);
-refs.form.addEventListener('input', throttle(saveToLocalStorage, 500));
-
-let savedData = localStorage.getItem(STORAGE_KEY);
-if (savedData) {
-  fillForm(savedData);
-}
-
-function saveToLocalStorage({ target }) {
-  const { value } = target;
-  target.setAttribute('value', value);
-  dataFill();
-  updateLocalStorage();
-}
-
-function dataFill() {
-  formData.email = formEmail.getAttribute('value');
-  formData.message = formMessage.getAttribute('value');
-}
-
-function updateLocalStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-}
-
-function fillForm(savedData) {
-  const extractedData = JSON.parse(savedData);
-  formEmail.setAttribute('value', extractedData.email);
-  formMessage.setAttribute('value', extractedData.message);
-  formMessage.textContent = extractedData.message;
-  dataFill();
-}
+textareaReset();
 
 function onFormSubmit(event) {
-  console.log('feedback-form-state');
   event.preventDefault();
+  if (email.value === '') {
+    alert('Email field to be filled!');
+    return;
+  }
+  if (textarea.value === '') {
+    alert('Message field to be filled!');
+    return;
+  }
+  console.log({
+    Email: email.value,
+    Message: textarea.value,
+  });
   event.currentTarget.reset();
-  localStorage.removeItem(STORAGE_KEY);
-  formReset();
+  localStorage.removeItem('email');
+  localStorage.removeItem('message');
 }
 
-function formReset() {
-  formEmail.setAttribute('value', '');
-  formMessage.setAttribute('value', '');
-  formMessage.textContent = '';
+function onEmailFilled(event) {
+  const email = event.target.value;
+  localStorage.setItem('email', email);
+}
+
+function onMessageFilled(event) {
+  const message = event.target.value;
+  localStorage.setItem('message', message);
+}
+
+function textareaReset() {
+  const savedEmail = localStorage.getItem('email');
+  const savedMessage = localStorage.getItem('message');
+  if (savedMessage) {
+    textarea.value = savedMessage;
+  }
+  if (savedEmail) {
+    email.value = savedEmail;
+  }
 }
